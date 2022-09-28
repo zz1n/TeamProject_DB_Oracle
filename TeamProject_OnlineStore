@@ -1,0 +1,183 @@
+팀프로젝트 온라인스토어 DB 짠 것
+
+    //Sequence 생성
+CREATE SEQUENCE SEQ_userDB
+INCREMENT BY 1
+START WITH 2000000
+MAXVALUE 2999999
+NOCYCLE;
+
+CREATE SEQUENCE SEQ_sellerDB
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 999999
+NOCYCLE;
+
+CREATE SEQUENCE SEQ_boardDB
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 999999
+NOCYCLE;
+
+CREATE SEQUENCE SEQ_productDB
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 999999
+NOCYCLE;
+
+CREATE SEQUENCE SEQ_userDB
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 999999
+NOCYCLE;
+
+CREATE SEQUENCE SEQ_orderDB
+INCREMENT BY 1
+START WITH 1
+MAXVALUE 999999
+NOCYCLE;
+
+    //
+create table SELLERDB
+    (
+    scode varchar(10) primary key,
+    scomname varchar(20) not null,
+    sprename varchar(20),
+    sbusnum varchar(20) not null,
+    scomsalenum varchar(20) not null,
+    scomaddress varchar(200) not null,
+    semail varchar(20),
+    smobile varchar(20)
+    );
+    
+create table userDB
+    (
+    ucode varchar(10) primary key,
+    userid varchar(20) not null,
+    userpw varchar(100) not null,
+    uname varchar(10) not null,
+    umobile varchar(20),
+    uaddress1 varchar(200),
+    uaddress2 varchar(200),
+    uaddress3 varchar(200),
+    uzipcode1 NUMBER(6),
+    uzipcode2 NUMBER(6),
+    uzipcode3 NUMBER(6),
+    uemail varchar(20),
+    upoint NUMBER(6) default 0,
+    urgtdate date default sysdate,
+    useyn number(1) default 1
+    );
+    
+create table ORDERDB
+    (
+    ocode varchar(10) primary key,
+    ucode varchar(10) not null,
+    scode varchar(10) not null,
+    pcode varchar(10) not null,
+    ocount NUMBER(2) not null,
+    oaddress varchar(300) not null,
+    ozipcode NUMBER(6),
+    omemo varchar(100),
+    omethod varchar(10) not null,
+    odate date default sysdate,
+    ostate number(1) default 1,
+    oshipcode varchar(20),
+    oshipstate number(1) default 1,
+    ocharge number(8) not null
+    );
+    
+create table PROFITDB
+    (
+    ocode varchar(10) primary key,
+    scode varchar(10) not null,
+    pcode varchar(10) not null,
+    pname varchar(10) not null,
+    oprofit NUMBER(20) not null,
+    ocount NUMBER(20) not null,
+    odate date default sysdate
+    );
+    
+create table LISTDB
+    (
+    pcode varchar(10) primary key,
+    scode varchar(10) not null,
+    pname varchar(10) not null,
+    price NUMBER(10) not null,
+    cost number(10) not null,
+    pcount number(10) not null,
+    pshipday number(1) not null,
+    pshipcost number(6) not null,
+    preshipcost number(6) not null,
+    pspshipcost number(6) not null,
+    pthumbnail VARCHAR(100),
+    pdscrpt varchar(1000),
+    pmaincate varchar(10) not null,
+    psubcate varchar(10) not null,
+    prgtdate date default sysdate
+    );
+    
+create table checkDB
+    (
+    ucode varchar(10) not null,
+    pcode varchar(10) not null,
+    indate date default sysdate,
+    scode varchar(10) not null,
+    bcount number(2) default 0,
+    bcode number(1) not null
+    );
+    
+create table boardDB
+    (
+    bnum varchar(10) primary key,
+    bcode varchar(10) not null,
+    bname varchar(20) not null,
+    bcont varchar(1000) not null,
+    pcode varchar(10) not null,
+    bdate date default sysdate,
+    btype number(1) not null,
+    reproot number(10) not null,
+    repstep number(3) not null,
+    repindent number(3) not null
+    );
+
+    //작업 중 확인할 임시데이터
+delete from userdb;
+delete from orderdb;
+delete from profitdb;
+delete from listdb;
+
+insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user001', 'asdf', 'soncy', '010-1111-1111', '수원시', '서울시', '대구시', 12345, 42457, 85756, 'scy@ezen.com', 71558, sysdate, 1);
+insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user002', 'asdf', 'songsy', '010-2222-2222', '수원시', '부산시', '일산시', 12345, 94521, 23457, 'ssy@ezen.com', 942, sysdate, 1);
+insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user003', 'asdf', 'kimhj', '010-3333-3333', '수원시', '대전시', '강릉시', 12345, 35279, 57891, 'khj@ezen.com', 4125, sysdate, 1);
+
+insert into sellerdb values('S'||LPAD(SEQ_sellerDB.NEXTVAL,5,0), 'seller001', 'asdf', 'leecompany', 'leecm', '100-10-100000', '2022-서울시-4444', '서울시', 'lcm@ezen.com', '010-4444-4444', sysdate, 1);
+insert into sellerdb values('S'||LPAD(SEQ_sellerDB.NEXTVAL,5,0), 'seller002', 'asdf', 'kimcompany', 'kimms', '200-20-200000', '2022-수원시-4444', '수원시', 'kms@ezen.com', '010-5555-5555', sysdate, 1);
+insert into sellerdb values('S'||LPAD(SEQ_sellerDB.NEXTVAL,5,0), 'seller003', 'asdf', 'jincompany', 'kimhj', '300-30-300000', '2022-대전시-4444', '대전시', 'khj@ezen.com', '010-3333-3333', sysdate, 1);
+
+insert into listdb values('P'||LPAD(SEQ_productDB.NEXTVAL,5,0), 'S00001', 'Chicken', 1000, 500, 270, 2, 2500, 5000, 2500, '-', '-', 'Meat', 'Chicken', 'meat-chicken-diet', sysdate);
+insert into listdb values('P'||LPAD(SEQ_productDB.NEXTVAL,5,0), 'S00002', 'Coke', 1500, 400, 800, 4, 2500, 5000, 2500, '-', '-', 'Drink', 'soda', 'drink-soda-coke', sysdate);
+insert into listdb values('P'||LPAD(SEQ_productDB.NEXTVAL,5,0), 'S00003', 'Tomato', 800, 400, 270, 1, 2500, 5000, 2500, '-', '-', 'Veggie', 'Tomato', 'veggie-tomato-fresh', sysdate);
+insert into listdb values('P'||LPAD(SEQ_productDB.NEXTVAL,5,0), 'S00001', 'Pork', 2000, 800, 310, 2, 2500, 5000, 2500, '-', '-', 'Meat', 'Pork', 'meat-pork-local', sysdate);
+insert into listdb values('P'||LPAD(SEQ_productDB.NEXTVAL,5,0), 'S00002', 'Lemonade', 3000, 1200, 752, 4, 2500, 5000, 2500, '-', '-', 'Drink', 'soda', 'Drink-soda-fruit-lemon', sysdate);
+insert into listdb values('P'||LPAD(SEQ_productDB.NEXTVAL,5,0), 'S00003', 'Lettuce', 5000, 2400, 181, 1, 2500, 5000, 2500, '-', '-', 'Veggie', 'Lettuce', 'veggie-lettuce-fresh', sysdate);
+
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00001', 'S00001', 'P00001', 12, '서울시', 42457, '문앞이요', 'card', sysdate, 1, '6045124875132', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00002', 'S00003', 'P00002', 8, '수원시', 12345, '문자주세요', 'card', sysdate, 2, '6078459122345', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00003', 'S00002', 'P00005', 3, '대전시', 35279, '안심택배함에 넣어주세요', 'cash', sysdate, 1, '60851237889451', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00001', 'S00003', 'P00006', 2, '수원시', 12345, '문앞이요', 'card', sysdate, 3, '6058975123485', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00002', 'S00002', 'P00003', 1, '일산시', 23457, '문자주세요', 'card', sysdate, 1, '6085967411253', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00003', 'S00001', 'P00004', 20, '강릉시', 57891, '-', 'card', sysdate, 1, '6099451233587', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00001', 'S00003', 'P00001', 5, '대구시', 85756, '문앞이요', 'point', sysdate, 3, '6077875413562', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00002', 'S00002', 'P00002', 7, '부산시', 94521, '문자좀주세요', 'cash', sysdate, 2, '6099859856412', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00003', 'S00001', 'P00004', 8, '수원시', 12345, '문앞에놔주세요', 'card', sysdate, 3, '6033157849521', 1);
+insert into orderdb values('O'||LPAD(SEQ_orderDB.NEXTVAL,5,0), 'U00001', 'S00002', 'P00005', 2, '서울시', 42457, '문앞이요', 'card', sysdate, 1, '6011234512316', 1);
+
+insert into checkdb values('U00001', 'P00003', sysdate, 'S00003', 1, 1);
+insert into checkdb values('U00001', 'P00006', sysdate, 'S00003', 1, 1);
+insert into checkdb values('U00002', 'P00003', sysdate, 'S00003', 1, 1);
+insert into checkdb values('U00003', 'P00001', sysdate, 'S00001', 1, 2);
+insert into checkdb values('U00003', 'P00002', sysdate, 'S00002', 1, 2);
+insert into checkdb values('U00003', 'P00005', sysdate, 'S00002', 1, 2);
+
+insert into profitdb (select o.ocode, l.scode, l.pcode, l.pname, case when o.ozipcode = 57891 then ((l.price*o.ocount)+l.pshipcost+l.pspshipcost) else ((l.price*o.ocount)+l.pshipcost) end, o.ocount, o.odate from orderdb o left outer join listdb l on (o.pcode = l.pcode));
