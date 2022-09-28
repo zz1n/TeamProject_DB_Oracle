@@ -143,11 +143,6 @@ create table boardDB
     );
 
     //작업 중 확인할 임시데이터
-delete from userdb;
-delete from orderdb;
-delete from profitdb;
-delete from listdb;
-
 insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user001', 'asdf', 'soncy', '010-1111-1111', '수원시', '서울시', '대구시', 12345, 42457, 85756, 'scy@ezen.com', 71558, sysdate, 1);
 insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user002', 'asdf', 'songsy', '010-2222-2222', '수원시', '부산시', '일산시', 12345, 94521, 23457, 'ssy@ezen.com', 942, sysdate, 1);
 insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user003', 'asdf', 'kimhj', '010-3333-3333', '수원시', '대전시', '강릉시', 12345, 35279, 57891, 'khj@ezen.com', 4125, sysdate, 1);
