@@ -1,7 +1,7 @@
 TeamProject_OnlineStore
 팀프로젝트 온라인스토어 DB 짠 것
 
-    //Sequence 생성
+    1. Sequence 생성
 CREATE SEQUENCE SEQ_userDB
 INCREMENT BY 1
 START WITH 2000000
@@ -38,7 +38,8 @@ START WITH 1
 MAXVALUE 999999
 NOCYCLE;
 
-    //Table 생성
+
+    2. Table 생성
 create table SELLERDB
     (
     scode varchar(10) primary key,
@@ -142,7 +143,8 @@ create table boardDB
     repindent number(3) not null
     );
 
-    //작업 중 확인할 임시데이터
+
+    3. 작업 중 확인할 임시데이터
 insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user001', 'asdf', 'soncy', '010-1111-1111', '수원시', '서울시', '대구시', 12345, 42457, 85756, 'scy@ezen.com', 71558, sysdate, 1);
 insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user002', 'asdf', 'songsy', '010-2222-2222', '수원시', '부산시', '일산시', 12345, 94521, 23457, 'ssy@ezen.com', 942, sysdate, 1);
 insert into userdb values('U'||LPAD(SEQ_userDB.NEXTVAL,5,0), 'user003', 'asdf', 'kimhj', '010-3333-3333', '수원시', '대전시', '강릉시', 12345, 35279, 57891, 'khj@ezen.com', 4125, sysdate, 1);
@@ -177,3 +179,71 @@ insert into checkdb values('U00003', 'P00002', sysdate, 'S00002', 1, 2);
 insert into checkdb values('U00003', 'P00005', sysdate, 'S00002', 1, 2);
 
 insert into profitdb (select o.ocode, l.scode, l.pcode, l.pname, case when o.ozipcode = 57891 then ((l.price*o.ocount)+l.pshipcost+l.pspshipcost) else ((l.price*o.ocount)+l.pshipcost) end, o.ocount, o.odate from orderdb o left outer join listdb l on (o.pcode = l.pcode));
+
+
+    4. 코드 짜면서 쓴 쿼리문
+<select id="usereareview" resultMap="dto">
+select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+</select>
+
+<insert id="userreviewsave">
+insert into boarddb select SEQ_boardDB.NEXTVAL, ucode, #{param2}, #{param3}, pcode, sysdate, 2, 2, 0, 0 from orderdb where ocode = #{param1}
+</insert>
+
+<select id="userreviewlist" resultMap="dto">
+select b.bnum, b.bname, l.pname, b.bdate from boarddb b left outer join listdb l on (b.pcode = l.pcode) where  b.bcode = (select ucode from userdb where userid = #{param1}) and b.btype = #{param2}
+</select>
+
+<delete id="userboarddel">
+delete from boarddb where bnum = #{param2} and bcode = (select ucode from userdb where userid=#{param1})
+</delete>
+
+<select id="userreviewupdateget" resultMap="dto">
+select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+</select>
+
+<update id="userreviewupdateset">
+update boarddb set bname = #{param3}, bcont = #{param4} where bnum = #{param2} and bcode = (select ucode from userdb where userid = #{param1})
+</update>
+
+<insert id="usertosellersave">
+insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, #{param4}, sysdate, 1, SEQ_boardDB.CURRVAL, 0, 0)
+</insert>
+
+<select id="usertolist" resultMap="dto">
+select b.bnum, b.bname, b.bdate, p.pname from boarddb b, listdb p where b.pcode = p.pcode(+) and b.btype = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+</select>
+
+<select id="usertosellerout" resultMap="dto">
+select b.bnum, b.bname, b.bcont, p.pname, b.bdate from boarddb b, listdb p where b.pcode = p.pcode(+) and reproot = #{param1} order by bnum
+</select>
+
+<insert id="usertositesave">
+insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, '-', sysdate, 3, SEQ_boardDB.CURRVAL, 0, 0)
+</insert>
+
+<select id="usercheck" resultMap="dto">
+	select l.pcode, l.pthumbnail, l.pname, l.price, c.bcount from listdb l left outer join checkdb c on (l.pcode = c.pcode) where ucode = (select ucode from userdb where userid = #{param1}) and bcode = #{param2}
+</select>
+
+<select id="usertoseller" resultMap="dto">
+	select pcode, pname, pthumbnail from listdb where pcode = (select pcode from orderdb where ocode = #{param1})
+</select>
+
+<select id="orderlist" resultMap="dto">
+select o.ocode, o.ocount, 
+		decode (o.ostate,
+		        1, '배송전',
+		        2, '배송시작',
+		        3, '구매확정')
+		, o.odate, l.pname, o.ocharge, nvl(b1.bnum, 0), nvl(b2.bnum, 0)
+		from orderdb o join listdb l on (o.pcode = l.pcode)
+		    left outer join userdb u on (o.ucode = u.ucode)
+		    left outer join boarddb b1 on (u.ucode = b1.bcode and o.pcode = b1.pcode and b1.btype=2)
+            left outer join boarddb b2 on (u.ucode = b2.bcode and o.pcode = b2.pcode and b2.btype=1)
+		where (odate between add_months(sysdate, -(#{param2}+3)) and add_months(sysdate, -(#{param2})))
+		    and u.userid = #{param1}
+</select>
+
+
+
