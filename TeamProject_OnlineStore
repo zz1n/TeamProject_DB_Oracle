@@ -38,7 +38,7 @@ START WITH 1
 MAXVALUE 999999
 NOCYCLE;
 
-    //
+    //Table 생성
 create table SELLERDB
     (
     scode varchar(10) primary key,
