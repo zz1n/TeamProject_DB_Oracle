@@ -245,5 +245,11 @@ select o.ocode, o.ocount,
 		    and u.userid = #{param1}
 </select>
 
-
+<select id="orderlist" resultMap="dto">
+select p.pthumbnail as oaddress, o.ocode, p.pname as omemo, o.ocount, o.ocharge
+    from orderdb o left outer join listdb p on (o.pcode = p.pcode)
+                   left outer join userdb u on (o.ucode = u.ucode)
+    where (odate between add_months(sysdate, -(#{param2}+3)) and add_months(sysdate, -(#{param2})))
+        and u.userid = #{param1};
+</select>
 
