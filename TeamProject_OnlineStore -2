@@ -1,0 +1,97 @@
+    4. 코드 짜면서 쓴 쿼리문
+    
+<select id="usereareview" resultMap="dto">
+select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+</select>
+
+<insert id="userreviewsave">
+insert into boarddb select SEQ_boardDB.NEXTVAL, ucode, #{param2}, #{param3}, pcode, sysdate, 2, 2, 0, 0 from orderdb where ocode = #{param1}
+</insert>
+
+<select id="userreviewlist" resultMap="dto">
+select b.bnum, b.bname, l.pname, b.bdate from boarddb b left outer join listdb l on (b.pcode = l.pcode) where  b.bcode = (select ucode from userdb where userid = #{param1}) and b.btype = #{param2}
+</select>
+
+<delete id="userboarddel">
+delete from boarddb where bnum = #{param2} and bcode = (select ucode from userdb where userid=#{param1})
+</delete>
+
+<select id="userreviewupdateget" resultMap="dto">
+select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+</select>
+
+<update id="userreviewupdateset">
+update boarddb set bname = #{param3}, bcont = #{param4} where bnum = #{param2} and bcode = (select ucode from userdb where userid = #{param1})
+</update>
+
+<insert id="usertosellersave">
+insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, #{param4}, sysdate, 1, SEQ_boardDB.CURRVAL, 0, 0)
+</insert>
+
+<select id="usertolist" resultMap="dto">
+select b.bnum, b.bname, b.bdate, p.pname from boarddb b, listdb p where b.pcode = p.pcode(+) and b.btype = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+</select>
+
+<select id="usertosellerout" resultMap="dto">
+select b.bnum, b.bname, b.bcont, p.pname, b.bdate from boarddb b, listdb p where b.pcode = p.pcode(+) and reproot = #{param1} order by bnum
+</select>
+
+<insert id="usertositesave">
+insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, '-', sysdate, 3, SEQ_boardDB.CURRVAL, 0, 0)
+</insert>
+
+<select id="usercheck" resultMap="dto">
+	select l.pcode, l.pthumbnail, l.pname, l.price, c.bcount from listdb l left outer join checkdb c on (l.pcode = c.pcode) where ucode = (select ucode from userdb where userid = #{param1}) and bcode = #{param2}
+</select>
+
+<select id="usertoseller" resultMap="dto">
+	select pcode, pname, pthumbnail from listdb where pcode = (select pcode from orderdb where ocode = #{param1})
+</select>
+
+<select id="orderlist" resultMap="dto">
+select o.ocode, o.ocount, 
+		decode (o.ostate,
+		        1, '배송전',
+		        2, '배송시작',
+		        3, '구매확정')
+		, o.odate, l.pname, o.ocharge, nvl(b1.bnum, 0), nvl(b2.bnum, 0)
+		from orderdb o join listdb l on (o.pcode = l.pcode)
+		    left outer join userdb u on (o.ucode = u.ucode)
+		    left outer join boarddb b1 on (u.ucode = b1.bcode and o.pcode = b1.pcode and b1.btype=2)
+            left outer join boarddb b2 on (u.ucode = b2.bcode and o.pcode = b2.pcode and b2.btype=1)
+		where (odate between add_months(sysdate, -(#{param2}+3)) and add_months(sysdate, -(#{param2})))
+		    and u.userid = #{param1}
+</select>
+
+<select id="orderlist" resultMap="dto">
+select p.pthumbnail, o.ocode, p.pname, o.ocount, o.ocharge
+    from orderdb o left outer join listdb p on (o.pcode = p.pcode)
+                   left outer join userdb u on (o.ucode = u.ucode)
+    where (odate between add_months(sysdate, -(#{param2}+3)) and add_months(sysdate, -(#{param2})))
+        and u.userid = #{param1}
+</select>
+
+<select>
+select u.uname, u.ucode, u.umobile, p.pname, o.ocount, o.ocharge, o.ozipcode, o.oaddress, o.odate, o.ostate, p.pshipcomp, o.oshipcode
+	from orderdb o left outer join userdb u on (o.ucode = u.ucode)
+		       left outer join listdb p on (o.pcode = p.pcode)
+	    where o.scode = #{param1}
+		and  ocode = #{param2} and odate  between  #{param3} and to_date(#{param3}, 'YY/MM/DD') + 1;
+</select>
+
+<select>
+select 
+    (select sum(ocharge) from orderdb where odate = sysdate and scode=#{param1}) as 일주문금액,
+    (select sum(ocharge) from orderdb where odate between add_months(sysdate, -1) and sysdate and scode=#{param1}) as 월주문금액,
+    (select sum(ocharge) from orderdb where ostate = 4 and scode=#{param1}) as 환불,
+    (select sum(bcount) from checkdb where scode = #{param1}) as 장바구니,
+    (select sum(ocount) from orderdb where oshipstate = 1 and scode=#{param1}) as 배송전,
+    (select sum(ocount) from orderdb where ostate = 2 and scode=#{param1}) as 취소신청,
+    (select sum(ocount) from orderdb where ostate = 3 and scode=#{param1}) as 반품신청
+from dual;
+</select>
+
+<select id="orderdetail" resultType="com.teampj.shop.TotalDTO">
+select p.pthumbnail, o.ocode, o.scode, p.pcode, p.pname, o.ocount, o.ocharge, o.ostate, o.oshipstate, o.oshipcode, o.ozipcode, o.oaddress, o.omemo, o.odate
+	from orderdb o left outer join listdb p on (o.pcode = p.pcode) where ocode = #{param2} and ucode = #{param1}
+</select>
