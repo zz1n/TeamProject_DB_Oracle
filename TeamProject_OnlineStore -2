@@ -1,3 +1,7 @@
+    3. 팀원들과 공유하기위해 쓴 것
+select /*insert*/ * from boarddb;	//db에 있는 데이터를 insert 형 쿼리문으로 짜준다! ctrl+space가 아니라 F5를 눌러야함.
+
+
     4. 코드 짜면서 쓴 쿼리문
     
 <select id="usereareview" resultMap="dto">
