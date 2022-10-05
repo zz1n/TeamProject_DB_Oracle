@@ -260,3 +260,15 @@ select u.uname, u.ucode, u.umobile, p.pname, o.ocount, o.ocharge, o.ozipcode, o.
 	    where o.scode = #{param1}
 		and  ocode = #{param2} and odate  between  #{param3} and to_date(#{param3}, 'YY/MM/DD') + 1;
 </select>
+
+<select>
+select 
+    (select sum(ocharge) from orderdb where odate = sysdate and scode=#{param1}) as 일주문금액,
+    (select sum(ocharge) from orderdb where odate between add_months(sysdate, -1) and sysdate and scode=#{param1}) as 월주문금액,
+    (select sum(ocharge) from orderdb where ostate = 4 and scode=#{param1}) as 환불,
+    (select sum(bcount) from checkdb where scode = #{param1}) as 장바구니,
+    (select sum(ocount) from orderdb where oshipstate = 1 and scode=#{param1}) as 배송전,
+    (select sum(ocount) from orderdb where ostate = 2 and scode=#{param1}) as 취소신청,
+    (select sum(ocount) from orderdb where ostate = 3 and scode=#{param1}) as 반품신청
+from dual;
+</select>
