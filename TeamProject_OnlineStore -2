@@ -3,70 +3,82 @@ select /*insert*/ * from boarddb;	//db에 있는 데이터를 insert 형 쿼리�
 
 
     4. 코드 짜면서 쓴 쿼리문
-    
+
+<!-- 본인파트 -->
+
+   - 작성리뷰 개별 상세 출력 (boarddb에 listdb(상품목록db) 를 외부조인함)
 <select id="usereareview" resultMap="dto">
-select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+	select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
 </select>
 
+   - 작성리뷰 저장 (서브쿼리를 사용해 ocode(주문코드)로 orderdb에서 pcode(상품코드)를 가져옴)
 <insert id="userreviewsave">
-insert into boarddb select SEQ_boardDB.NEXTVAL, ucode, #{param2}, #{param3}, pcode, sysdate, 2, 2, 0, 0 from orderdb where ocode = #{param1}
+	insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param4}), #{param2}, #{param3}, (select pcode from orderdb where ocode = #{param1}), sysdate, 2, SEQ_boardDB.CURRVAL, 0, 0)
 </insert>
 
+   - 작성글 목록 (btype(boarddb에 저장되는 글이 리뷰인지 문의인지 구분하는 역할)을 사용해 리뷰출력, 사이트문의출력, 판매자문의출력을 한 쿼리문으로 처리함)
 <select id="userreviewlist" resultMap="dto">
-select b.bnum, b.bname, l.pname, b.bdate from boarddb b left outer join listdb l on (b.pcode = l.pcode) where  b.bcode = (select ucode from userdb where userid = #{param1}) and b.btype = #{param2}
+	select b.bnum, b.bname, l.pname as pcode, b.bdate from boarddb b left outer join listdb l on (b.pcode = l.pcode) where  b.bcode = (select ucode from userdb where userid = #{param1}) and b.btype = #{param2}
 </select>
 
+   - 작성글 삭제
 <delete id="userboarddel">
-delete from boarddb where bnum = #{param2} and bcode = (select ucode from userdb where userid=#{param1})
+	delete from boarddb where bnum = #{param2} and bcode = (select ucode from userdb where userid=#{param1})
 </delete>
 
+   - 리뷰 수정하기위해 기존 내용 출력
 <select id="userreviewupdateget" resultMap="dto">
-select b.bnum, l.pname, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+	select b.bnum, l.pname as pcode, b.bdate, b.bname, b.bcont from boarddb b left outer join listdb l on (b.pcode = l.pcode) where b.bnum = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
 </select>
 
+   - 리뷰 수정한 내용 저장
 <update id="userreviewupdateset">
-update boarddb set bname = #{param3}, bcont = #{param4} where bnum = #{param2} and bcode = (select ucode from userdb where userid = #{param1})
+	update boarddb set bname = #{param3}, bcont = #{param4} where bnum = #{param2} and bcode = (select ucode from userdb where userid = #{param1})
 </update>
 
+   - 판매자문의 저장
 <insert id="usertosellersave">
-insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, #{param4}, sysdate, 1, SEQ_boardDB.CURRVAL, 0, 0)
+	insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, #{param4}, sysdate, 1, SEQ_boardDB.CURRVAL, 0, 0)
 </insert>
 
+   - 작성 리뷰 목록 가져오기
 <select id="usertolist" resultMap="dto">
-select b.bnum, b.bname, b.bdate, p.pname from boarddb b, listdb p where b.pcode = p.pcode(+) and b.btype = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
+	select b.bnum, b.bname, b.bdate, p.pname from boarddb b, listdb p where b.pcode = p.pcode(+) and b.btype = #{param2} and b.bcode = (select ucode from userdb where userid = #{param1})
 </select>
 
-<select id="usertosellerout" resultMap="dto">
-select b.bnum, b.bname, b.bcont, p.pname, b.bdate from boarddb b, listdb p where b.pcode = p.pcode(+) and reproot = #{param1} order by bnum
+   - 판매자/사이트문의 상세출력 (bnum(글번호)를 이용해 가져오기때문에 쿼리 한개만 사용)
+<select id="usertoaskout" resultMap="dto">
+	select b.bnum, b.bname, b.bcont, p.pname, b.bdate from boarddb b, listdb p where b.pcode = p.pcode(+) and reproot = #{param1} order by bnum
 </select>
 
+   - 사이트에 문의하기 저장
 <insert id="usertositesave">
-insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, '-', sysdate, 3, SEQ_boardDB.CURRVAL, 0, 0)
+	insert into boarddb values (SEQ_boardDB.NEXTVAL, (select ucode from userdb where userid = #{param1}), #{param2}, #{param3}, '-', sysdate, 3, SEQ_boardDB.CURRVAL, 0, 0)
 </insert>
 
+   - 장바구니/좋아요 목록 (bcode(장바구니/좋아요를 구분해주는 역할)로 구분)
 <select id="usercheck" resultMap="dto">
-	select l.pcode, l.pthumbnail, l.pname, l.price, c.bcount from listdb l left outer join checkdb c on (l.pcode = c.pcode) where ucode = (select ucode from userdb where userid = #{param1}) and bcode = #{param2}
+	select l.pcode, l.pthumbnail, l.pname, l.price, c.bcount, c.ccode
+	from listdb l left outer join checkdb c on (l.pcode = c.pcode)
+	where ucode = (select ucode from userdb where userid = #{param1}) and bcode = #{param2}
 </select>
+	
+   - 장바구니/좋아요 삭제
+<delete id="checkdel">
+	delete from checkdb where ccode = #{param1} and ucode = (select ucode from userdb where userid = #{param2})
+</delete>
 
+   - 장바구니/좋아요 등록
+<insert id="gotocheck">
+	insert into checkdb values ((select ucode from userdb where userid = #{param1}), #{param2}, sysdate, (select pcode from listdb where pcode = #{param2}), 1, #{param3}, SEQ_checkDB.NEXTVAL)
+</insert>
+
+   - 판매자문의
 <select id="usertoseller" resultMap="dto">
 	select pcode, pname, pthumbnail from listdb where pcode = (select pcode from orderdb where ocode = #{param1})
 </select>
 
-<select id="orderlist" resultMap="dto">
-select o.ocode, o.ocount, 
-		decode (o.ostate,
-		        1, '배송전',
-		        2, '배송시작',
-		        3, '구매확정')
-		, o.odate, l.pname, o.ocharge, nvl(b1.bnum, 0), nvl(b2.bnum, 0)
-		from orderdb o join listdb l on (o.pcode = l.pcode)
-		    left outer join userdb u on (o.ucode = u.ucode)
-		    left outer join boarddb b1 on (u.ucode = b1.bcode and o.pcode = b1.pcode and b1.btype=2)
-            left outer join boarddb b2 on (u.ucode = b2.bcode and o.pcode = b2.pcode and b2.btype=1)
-		where (odate between add_months(sysdate, -(#{param2}+3)) and add_months(sysdate, -(#{param2})))
-		    and u.userid = #{param1}
-</select>
-
+   - 주문 목록 출력 (3개월 주문 내역만 출력해주고, n달을 입력받아 n~n+3 까지 출력하는 방식을 사용해 쿼리문 하나로 통일)
 <select id="orderlist" resultMap="dto">
 select p.pthumbnail, o.ocode, p.pname, o.ocount, o.ocharge
     from orderdb o left outer join listdb p on (o.pcode = p.pcode)
@@ -75,27 +87,138 @@ select p.pthumbnail, o.ocode, p.pname, o.ocount, o.ocharge
         and u.userid = #{param1}
 </select>
 
-<select>
-select u.uname, u.ucode, u.umobile, p.pname, o.ocount, o.ocharge, o.ozipcode, o.oaddress, o.odate, o.ostate, p.pshipcomp, o.oshipcode
+   - 주문 상세 출력
+<select id="orderdetail" resultMap="dto">
+	select p.pthumbnail, o.ocode, o.scode, o.pcode, p.pname, o.ocount, o.ocharge, o.ostate, o.oshipstate, o.oshipcode, o.ozipcode, o.oaddress, o.omemo, o.odate
+	from orderdb o left outer join listdb p on (o.pcode = p.pcode) where ocode = #{param2} and ucode = (select ucode from userdb where userid = #{param1})
+</select>
+
+   - 주문 정보 수정 출력
+<select id="userorderchangeget" resultMap="dto">
+	select p.pthumbnail, o.ocode, p.pname, o.ozipcode, o.oaddress, o.omemo, o.odate
+	from orderdb o left outer join listdb p on (o.pcode = p.pcode) where ocode = #{param2} and ucode = (select ucode from userdb where userid = #{param1})
+</select>
+
+   - 주문 정보 수정 저장
+<update id="userorderchangeset">
+	update orderdb set ozipcode = #{param2}, oaddress = #{param3}, omemo = #{param4} where ocode = #{param1}
+</update>
+
+   - 주문 상세
+<select id="orderdetail" resultMap="dto">
+	select p.pthumbnail, o.ocode, o.scode, o.pcode, p.pname, o.ocount, o.ocharge, o.ostate, o.oshipstate, o.oshipcode, o.ozipcode, o.oaddress, o.omemo, o.odate
+	from orderdb o left outer join listdb p on (o.pcode = p.pcode) where ocode = #{param2} and ucode = (select ucode from userdb where userid = #{param1})
+</select>
+
+   - 주문취소
+<update id="ordercancel">
+	update orderdb set ostate = 4 where ocode = #{param1} and ucode = (select ucode from userdb where userid = #{param2})
+</update>
+
+   - 환불요청
+<update id="orderrefund">
+	update orderdb set ostate = 3 where ocode = #{param1} and ucode = (select ucode from userdb where userid = #{param2})
+</update>
+
+<!-- 다른 사람 파트 중 일부 -->
+	: 팀원들이 쿼리문을 짜기 어려워 도움을 요청한 경우, 도와주면서 기억에 남았던 쿼리문
+
+   - 판매자 주문 조회 (orderdb에 userdb와 listdb를 외부조인하여, 검색어 or 검색기간 으로 조회하도록 함.
+   	검색어는 검색되는 칼럼을 param으로 함께 받아옴.)
+<select id="orderview" parameterType="String" resultMap="dto">
+	select
+	u.uname, u.ucode, u.umobile, p.pname, o.ocode ,o.ocount, o.ocharge,
+	o.ozipcode, o.oaddress, o.odate, o.ostate, o.oshipcomp, o.oshipcode, o.oshipstate 
 	from orderdb o left outer join userdb u on (o.ucode = u.ucode)
-		       left outer join listdb p on (o.pcode = p.pcode)
-	    where o.scode = #{param1}
-		and  ocode = #{param2} and odate  between  #{param3} and to_date(#{param3}, 'YY/MM/DD') + 1;
+	left outer join listdb p on (o.pcode = p.pcode)
+	where o.scode = #{param1}
+	and (#{param2} = #{param3}
+	or odate between #{param4} and to_date(#{param5}, 'YY/MM/DD') + 1)
 </select>
 
-<select>
-select 
-    (select sum(ocharge) from orderdb where odate = sysdate and scode=#{param1}) as 일주문금액,
-    (select sum(ocharge) from orderdb where odate between add_months(sysdate, -1) and sysdate and scode=#{param1}) as 월주문금액,
-    (select sum(ocharge) from orderdb where ostate = 4 and scode=#{param1}) as 환불,
-    (select sum(bcount) from checkdb where scode = #{param1}) as 장바구니,
-    (select sum(ocount) from orderdb where oshipstate = 1 and scode=#{param1}) as 배송전,
-    (select sum(ocount) from orderdb where ostate = 2 and scode=#{param1}) as 취소신청,
-    (select sum(ocount) from orderdb where ostate = 3 and scode=#{param1}) as 반품신청
-from dual;
+   - 환불내역 조회 (orderdb에 userdb와 listdb를 외부조인함. 검색어나 기간으로 조회)
+<select id="refundview" parameterType="String" resultMap="dto">
+	select
+	u.uname, u.ucode, u.umobile, p.pname, o.ocode ,o.ocount, o.ocharge,
+	o.ozipcode, o.oaddress, o.odate, o.ostate, o.oshipcomp, o.oshipcode, o.oshipstate 
+	from orderdb o left outer join userdb u on (o.ucode = u.ucode)
+	left outer join listdb p on (o.pcode = p.pcode)
+	where o.scode = #{param1}
+	and (#{param2} = #{param3}
+	or o.ostate = #{param4}
+	or odate between #{param5} and to_date(#{param6}, 'YY/MM/DD') + 1)
 </select>
 
-<select id="orderdetail" resultType="com.teampj.shop.TotalDTO">
-select p.pthumbnail, o.ocode, o.scode, p.pcode, p.pname, o.ocount, o.ocharge, o.ostate, o.oshipstate, o.oshipcode, o.ozipcode, o.oaddress, o.omemo, o.odate
-	from orderdb o left outer join listdb p on (o.pcode = p.pcode) where ocode = #{param2} and ucode = #{param1}
+   - 판매자 메인 페이지 데이터 출력 (주문관리하는 내역이 출력되는 페이지.
+	   일별 월별 주문/환불액, 장바구니에 담겨있는 판매자의 상품 수량 조회(최종적으로 미사용), 배송상태별 주문 개수, 주문상태별 주문 개수)
+<select id="mainOut" parameterType="String" resultMap="mdto">
+	select 
+	   //일별 월별 주문금액 : orderdb사용. 기간으로 조회. odate(주문날짜)가 sysdate와 같거나(일별), sysdate+1달~sysdate사이에 있으면(월별) 조회
+	nvl((select sum(ocharge) from orderdb where to_date(odate, 'YY/MM/DD') = to_date(sysdate, 'YY/MM/DD') and scode=#{param1}), 0) as daycost, 
+	nvl((select sum(ocharge) from orderdb where odate between add_months(sysdate, -1) and sysdate and scode=#{param1}), 0) as monthcost, 
+	
+  	   //일별 월별 환불금액 : orderdb사용. 기간으로 조회. ostate(주문상태)가 6(취소완료)인 경우, odate로 일별/월별 조회
+	nvl((select sum(ocharge) from orderdb where ostate = 6 and to_date(odate, 'YY/MM/DD') = to_date(sysdate, 'YY/MM/DD') and scode=#{param1}), 0) as dayrefund, 
+	nvl((select sum(ocharge) from orderdb where ostate = 6 and to_date(odate, 'YY/MM/DD') between add_months(sysdate, -1) and sysdate and scode=#{param1}), 0) as monthrefund, 
+	
+	   //장바구니에 담긴 상품 수량 : checkdb사용. checkdb에 담긴 상품의 scode(판매자코드)가 로그인한 사용자의 scode와 동일할 경우 count(장바구니에 담은 수량)를 sum함.
+	   	(최종적으로 사용되지 않음. 판매자의 상품이 담긴 총 수량을 확인하고, 차후 상품별로 장바구니에 몇개가 담겨있는지 개별 확인하는 방향으로 넘어가고자 했으나
+		 중요하지 않은 정보라 생각해 제외하게됨)
+	nvl((select sum(bcount) from checkdb where scode = #{param1}), 0) as checklist, 
+	
+ 	   //배송상태별 주문 개수 : orderdb사용. oshipstate(배송상태)가 1이면 배송 전, 2면 배송 중 인 주문.
+	nvl((select count(oshipstate) from orderdb where oshipstate = 1 and scode=#{param1}), 0) as shipstate1,
+	nvl((select count(oshipstate) from orderdb where oshipstate = 2 and scode=#{param1}), 0) as shipstate2, 
+	
+	   //주문상태별 주문 개수 : orderdb사용. ostate(주문상태)로 4(취소신청), 2(교환신청), 3(반품신청)을 구분해 처리함.
+	nvl((select count(ostate) from orderdb where ostate = 4 and scode=#{param1}), 0) as ostate4, 
+	nvl((select count(ostate) from orderdb where ostate = 2 and scode=#{param1}), 0) as ostate2,    
+	nvl((select count(ostate) from orderdb where ostate = 3 and scode=#{param1}), 0) as ostate3 
+	
+	   //도움을 요청한 팀원이 여러 db를 사용하는 걸 한 쿼리문으로 처리하기를 요청했기때문에 from dual;
+	from dual
+</select>
+
+   - 기간 별 매출조회 1일씩 : 날짜, 총매출, 총환불액 조회.
+   	orderdb에 orderdb를 2번 외부조인해 첫 orderdb는 날짜를, 두번째 orderdb는 총매출을, 세번째 orderdb는 총환불액을 조회.
+	매출은 ostate가 1, 환불은 6. 판매자가 지정한 조회 기간 사이만 조회.
+<select id="dayprofitcall" parameterType="String" resultMap="dto">
+	SELECT o.odate, 
+	sum(o1.ocharge) as totcost,
+	sum(o6.ocharge) as refudncost 
+	FROM orderdb o
+		left outer join orderdb o1 on (o.ocode = o1.ocode and o.ostate = 1) 
+		left outer join orderdb o6 on (o.ocode = o6.ocode and o.ostate = 6) 
+	WHERE (o.scode=#{param1} and o.ostate = 1 or o.ostate = 6) 
+	AND o.odate between to_date(#{param2}, 'YY/MM/DD') and to_date(#{param3}, 'YY/MM/DD') 
+	GROUP BY o.odate 
+	ORDER BY o.odate
+</select>
+
+   - 기간 별 매출조회 월별 : 상단과 같은 구조인데, 일별이 아니라 월별 출력을 위해 odate(주문날짜)를 'YY/MM'으로 to_char함.
+<select id="monthprofitcall" parameterType="String" resultMap="dto">
+	SELECT to_char(o.odate, 'YY/MM'),
+	sum(o1.ocharge) as totcost,
+	sum(o6.ocharge) as refundcost
+	FROM orderdb o
+		left outer join orderdb o1 on (o.ocode = o1.ocode and o.ostate = 1)
+		left outer join orderdb o6 on (o.ocode = o6.ocode and o.ostate = 6)
+	WHERE (o.scode=#{param1} and o.ostate = 1 or o.ostate = 6)
+	AND o.odate between to_date(#{param2}, 'YY/MM/DD') and to_date(#{param3}, 'YY/MM/DD')
+	GROUP BY to_char(o.odate, 'YY/MM')
+	ORDER BY to_char(o.odate, 'YY/MM')
+</select>
+
+   - 상품 별 매출조회 : 상단과 같은 구조인데, 특정 상품만 조회해야하므로 o.pcode(상품코드)를 추가함.
+<select id="pnameprofitcall" parameterType="String" resultMap="dto">
+	SELECT o.odate,
+	sum(o1.ocharge) as totcost,
+	sum(o6.ocharge) as refudncost
+	FROM orderdb o
+		left outer join orderdb o1 on (o.ocode = o1.ocode and o.ostate = 1)
+		left outer join orderdb o6 on (o.ocode = o6.ocode and o.ostate = 6)
+	WHERE (o.scode=#{param1} and o.pcode=#{param2} and o.ostate = 1 or o.ostate = 6)
+	AND o.odate between to_date(#{param3}, 'YY/MM/DD') and to_date(#{param4}, 'YY/MM/DD')
+	GROUP BY o.odate
+	ORDER BY o.odate
 </select>
