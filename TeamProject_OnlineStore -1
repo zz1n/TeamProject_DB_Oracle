@@ -43,20 +43,24 @@ NOCYCLE;
 create table SELLERDB
     (
     scode varchar(10) primary key,
+    sellerid varchar(20) not null,
+    sellerpw varchar(20) not null,
     scomname varchar(20) not null,
     sprename varchar(20),
     sbusnum varchar(20) not null,
     scomsalenum varchar(20) not null,
     scomaddress varchar(200) not null,
     semail varchar(20),
-    smobile varchar(20)
+    smobile varchar(20),
+    srgtdate date default sysdate,
+    selleryn number(1)
     );
     
 create table userDB
     (
     ucode varchar(10) primary key,
     userid varchar(20) not null,
-    userpw varchar(100) not null,
+    userpw varchar(200) not null,
     uname varchar(10) not null,
     umobile varchar(20),
     uaddress1 varchar(200),
@@ -65,7 +69,7 @@ create table userDB
     uzipcode1 NUMBER(6),
     uzipcode2 NUMBER(6),
     uzipcode3 NUMBER(6),
-    uemail varchar(20),
+    uemail varchar(100),
     upoint NUMBER(6) default 0,
     urgtdate date default sysdate,
     useyn number(1) default 1
@@ -77,16 +81,17 @@ create table ORDERDB
     ucode varchar(10) not null,
     scode varchar(10) not null,
     pcode varchar(10) not null,
-    ocount NUMBER(2) not null,
+    ocount NUMBER(5) not null,
     oaddress varchar(300) not null,
     ozipcode NUMBER(6),
     omemo varchar(100),
-    omethod varchar(10) not null,
+    omethod varchar(30) not null,
     odate date default sysdate,
     ostate number(1) default 1,
     oshipcode varchar(20),
     oshipstate number(1) default 1,
-    ocharge number(8) not null
+    ocharge number(8) not null,
+    oshipcomp varchar(20)
     );
     
 create table PROFITDB
@@ -104,7 +109,7 @@ create table LISTDB
     (
     pcode varchar(10) primary key,
     scode varchar(10) not null,
-    pname varchar(10) not null,
+    pname varchar(100) not null,
     price NUMBER(10) not null,
     cost number(10) not null,
     pcount number(10) not null,
@@ -113,9 +118,10 @@ create table LISTDB
     preshipcost number(6) not null,
     pspshipcost number(6) not null,
     pthumbnail VARCHAR(100),
-    pdscrpt varchar(1000),
-    pmaincate varchar(10) not null,
-    psubcate varchar(10) not null,
+    pdscrpt long,
+    pmaincate varchar(20) not null,
+    psubcate varchar(20) not null,
+    ptag varchar(100),
     prgtdate date default sysdate
     );
     
@@ -126,15 +132,16 @@ create table checkDB
     indate date default sysdate,
     scode varchar(10) not null,
     bcount number(2) default 0,
-    bcode number(1) not null
+    bcode number(1) not null,
+    ccode number(5) not null
     );
     
 create table boardDB
     (
     bnum varchar(10) primary key,
     bcode varchar(10) not null,
-    bname varchar(20) not null,
-    bcont varchar(1000) not null,
+    bname varchar(100) not null,
+    bcont long not null,
     pcode varchar(10) not null,
     bdate date default sysdate,
     btype number(1) not null,
